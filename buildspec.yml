@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Checking Python..."
+      - python --version
+  build:
+    commands:
+      - echo "Running app"
+      - python app.py
+
+artifacts:
+  files:
+    - '**/*'
