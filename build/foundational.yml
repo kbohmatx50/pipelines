@@ -6,6 +6,7 @@ env:
     AWS_DEFAULT_REGION: "us-east-1"
     LOG_LEVEL: "INFO"
     BUILD_OUTPUT_DIR: "build-output"
+    ARTIFACT_BUCKET: "keith-bucket"
   parameter-store:
     # Sensitive values stored in AWS Systems Manager Parameter Store
     DB_PASSWORD: "/myapp/db/password"
