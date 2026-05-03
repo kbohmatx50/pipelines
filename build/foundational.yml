@@ -1,0 +1,87 @@
+version: 0.2
+
+# Environment variables can be defined here or pulled from CodeBuild console
+env:
+  variables:
+    AWS_DEFAULT_REGION: "us-east-1"
+    LOG_LEVEL: "INFO"
+    BUILD_OUTPUT_DIR: "build-output"
+  parameter-store:
+    # Sensitive values stored in AWS Systems Manager Parameter Store
+    DB_PASSWORD: "/myapp/db/password"
+
+phases:
+  # Phase 1: Install dependencies and tools
+  install:
+    runtime-versions:
+      python: 3.11
+    on-failure: ABORT  # Stop immediately if install fails
+    commands:
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
+      - echo "Dependencies installed successfully"
+
+  # Phase 2: Pre-build - Run validations, tests, setup
+  pre_build:
+    on-failure: ABORT  # Fail the build if tests or lint fail
+    commands:
+      - echo "Starting pre-build phase..."
+      - echo "Running linting..."
+      - pylint src/ --exit-zero  # Report issues but don't abort
+      - echo "Running unit tests with coverage..."
+      - pytest tests/ --cov=src --cov-report=xml:coverage-report.xml --junitxml=test-report.xml
+      - echo "Pre-build checks completed"
+
+  # Phase 3: Build - Main application build
+  build:
+    on-failure: ABORT
+    commands:
+      - echo "Build started on $(date)"
+      - python app.py
+      - echo "Build completed on $(date)"
+
+  # Phase 4: Post-build - Package, deploy, or upload artifacts
+  post_build:
+    commands:
+      - echo "Packaging application..."
+      - mkdir -p $BUILD_OUTPUT_DIR
+      - cp -r src/ $BUILD_OUTPUT_DIR/
+      - cp requirements.txt $BUILD_OUTPUT_DIR/
+      - |
+        aws s3 cp $BUILD_OUTPUT_DIR/ s3://my-bucket/builds/$(date +%Y%m%d-%H%M%S)/ \
+          --recursive \
+          --region $AWS_DEFAULT_REGION
+      - echo "Post-build completed successfully"
+      - echo "Deploying CloudFormation stack..."
+      - |
+        aws cloudformation deploy \
+          --template-file build/s3-bucket.yml \
+          --stack-name my-s3-artifacts-stack \
+          --region us-east-1
+      - echo "CloudFormation stack deployed successfully"
+
+# Artifacts - Files to keep from the build
+artifacts:
+  files:
+    - build-output/**/*
+    - coverage-report.xml
+    - test-report.xml
+  name: BuildArtifact-$(date +%Y%m%d-%H%M%S)
+  discard-paths: no
+
+# Cache - Speed up builds by caching dependencies
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
+
+# Reports - Test and coverage reports
+reports:
+  coverage-report:
+    files:
+      - coverage-report.xml
+    file-format: COBERTURAXML
+  test-report:
+    files:
+      - test-report.xml
+    file-format: JUNITXML

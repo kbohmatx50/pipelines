@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/pipelines/copilot-chat/bd6f3609/sessions
+/.vs/pipelines/CopilotIndices/17.14.1661.41761
+/.vs/pipelines/FileContentIndex
