@@ -46,12 +46,7 @@ phases:
     commands:
       - echo "Packaging application..."
       
-# Artifacts - Files to keep from the build
-artifacts:
-  files:
-  
+# Artifacts - Files to keep from the build  
 # Cache - Speed up builds by caching dependencies
-cache:
 
 # Reports - Test and coverage reports
-reports:
