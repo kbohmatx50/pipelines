@@ -9,6 +9,11 @@ phases:
     commands:
       - echo "Running app"
       - python app.py
+  post_build:
+    commands:
+      - echo "Deploying CloudFormation stack..."
+      - chmod +x deploy.sh
+      - ./deploy.sh $GITHUB_OWNER $GITHUB_REPO $GITHUB_TOKEN
 
 artifacts:
   files:
