@@ -45,43 +45,13 @@ phases:
   post_build:
     commands:
       - echo "Packaging application..."
-      - mkdir -p $BUILD_OUTPUT_DIR
-      - cp -r src/ $BUILD_OUTPUT_DIR/
-      - cp requirements.txt $BUILD_OUTPUT_DIR/
-      - |
-        aws s3 cp $BUILD_OUTPUT_DIR/ s3://my-bucket/builds/$(date +%Y%m%d-%H%M%S)/ \
-          --recursive \
-          --region $AWS_DEFAULT_REGION
-      - echo "Post-build completed successfully"
-      - echo "Deploying CloudFormation stack..."
-      - |
-        aws cloudformation deploy \
-          --template-file build/s3-bucket.yml \
-          --stack-name my-s3-artifacts-stack \
-          --region us-east-1
-      - echo "CloudFormation stack deployed successfully"
-
+      
 # Artifacts - Files to keep from the build
 artifacts:
   files:
-    - build-output/**/*
-    - coverage-report.xml
-    - test-report.xml
-  name: BuildArtifact-$(date +%Y%m%d-%H%M%S)
-  discard-paths: no
-
+  
 # Cache - Speed up builds by caching dependencies
 cache:
-  paths:
-    - '/root/.cache/pip/**/*'
 
 # Reports - Test and coverage reports
 reports:
-  coverage-report:
-    files:
-      - coverage-report.xml
-    file-format: COBERTURAXML
-  test-report:
-    files:
-      - test-report.xml
-    file-format: JUNITXML
