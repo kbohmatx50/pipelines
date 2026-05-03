@@ -5,7 +5,7 @@ Resources:
   CodeBuildArtifactsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: keith-bucket
+      BucketName: keith-bucket231
       VersioningConfiguration:
         Status: Enabled
       PublicAccessBlockConfiguration:
