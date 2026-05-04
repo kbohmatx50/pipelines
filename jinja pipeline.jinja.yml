@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Simple pipeline for {{ pipeline_name }}
+
+Resources:
+
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: {{ pipeline_name }}-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: {{ pipeline_name }}-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                  - codedeploy:*
+                Resource: "*"
+
+  DeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: {{ deploy_app }}
+
+  DeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName: !Ref DeployApplication
+      DeploymentGroupName: {{ deploy_group }}
+      ServiceRoleArn: !GetAtt PipelineRole.Arn
+      DeploymentStyle:
+        DeploymentType: IN_PLACE
+        DeploymentOption: WITHOUT_TRAFFIC_CONTROL
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: {{ pipeline_name }}
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+
+        - Name: Source
+          Actions:
+            - Name: GitHubSource
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: "1"
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                Owner: {{ github_owner }}
+                Repo: {{ github_repo }}
+                Branch: {{ github_branch }}
+                OAuthToken: "{% raw %}{{resolve:secretsmanager:GitHubOAuthToken}}{% endraw %}"
+                PollForSourceChanges: false
+
+        - Name: Deploy
+          Actions:
+            - Name: CodeDeploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CodeDeploy
+                Version: "1"
+              InputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                ApplicationName: !Ref DeployApplication
+                DeploymentGroupName: !Ref DeploymentGroup

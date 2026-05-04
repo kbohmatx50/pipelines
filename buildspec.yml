@@ -3,18 +3,12 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Checking Python..."
-      - python --version
+      - pip install jinja2 pyyaml
   build:
     commands:
-      - echo "Running app"
       - python app.py
-  post_build:
-    commands:
-      - echo "Deploying CloudFormation stack..."
-      - chmod +x deploy.sh
-      - ./deploy.sh $GITHUB_OWNER $GITHUB_REPO $GITHUB_TOKEN
-
-artifacts:
-  files:
-    - '**/*'
+      - python render.py
+      - aws cloudformation deploy
+          --template-file pipeline.yml
+          --stack-name hello-world-pipeline-stack
+          --capabilities CAPABILITY_NAMED_IAM

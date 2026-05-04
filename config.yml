@@ -1,0 +1,7 @@
+pipeline_name: keith-pipeline
+github_owner: my-github-user
+github_repo: my-repo
+github_branch: main
+stack_name: keith-pipeline-stack
+deploy_app: keith-deploy-app
+deploy_group: keith-deploy-group
